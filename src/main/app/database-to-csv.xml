@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:context="http://www.springframework.org/schema/context" xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:data-mapper="http://www.mulesoft.org/schema/mule/ee/data-mapper" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.5.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schema/mule/ee/data-mapper/current/mule-data-mapper.xsd
+http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-current.xsd">
+    <db:generic-config name="Generic_Database_Configuration" url="jdbc:mysql://localhost:3306/company?user=generatedata&amp;password=generatedata&amp;generateSimpleParameterMetadata=true" driverClassName="com.mysql.jdbc.Driver" doc:name="Generic Database Configuration"/>
+    <context:property-placeholder location="common.properties"/>
+    <data-mapper:config name="List_Map__To_CSV" transformationGraphPath="list_map__to_csv.grf" doc:name="List_Map__To_CSV"/>
+    <batch:job name="database-to-fileBatch1">
+        <batch:input>
+            <poll doc:name="Poll">
+                <fixed-frequency-scheduler frequency="1" timeUnit="HOURS"/>
+                <db:select config-ref="Generic_Database_Configuration" doc:name="Database">
+                    <db:parameterized-query><![CDATA[SELECT no, first_name, last_name, role FROM employees INNER JOIN roles ON employees.no = roles.emp_no;]]></db:parameterized-query>
+                </db:select>
+            </poll>
+        </batch:input>
+        <batch:process-records>
+            <batch:step name="Batch_Step">
+                <batch:commit doc:name="Batch Commit" size="200">
+                    <data-mapper:transform doc:name="List&lt;Map&gt; To CSV" config-ref="List_Map__To_CSV"/>
+                    <file:outbound-endpoint path="${path.to.dir}" responseTimeout="10000" doc:name="File" />
+                </batch:commit>
+            </batch:step>
+        </batch:process-records>
+        <batch:on-complete>
+            <logger level="INFO" doc:name="Logger" message="Total Records exported: #[message.payload.getLoadedRecords()], Failed Records: #[message.payload.getFailedRecords()], Processing time: #[message.payload.getElapsedTimeInMillis()]"/>
+        </batch:on-complete>
+    </batch:job>
+</mule>

@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<mule-configuration xmlns="http://www.mulesoft.com/tooling/messageflow" name="database-to-csv">
+    <global-element name="Generic Database Configuration" type="http://www.mulesoft.org/schema/mule/db/generic-config" entity-id="Generic Database Configuration#1">
+        <properties>
+            <property name="dataSource-ref"/>
+            <property name="auxiliary;metauseMetaData" value="true"/>
+            <property name="springBeanConf"/>
+            <property name="name" value="Generic_Database_Configuration"/>
+            <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+            <property name="useXaTransactions"/>
+            <property name="parameterTable"/>
+            <property name="databaseURLConf"/>
+            <property name="auxiliary;index" value="1"/>
+            <property name="url" value="jdbc:mysql://localhost:3306/company?user=generatedata&amp;password=generatedata&amp;generateSimpleParameterMetadata=true"/>
+        </properties>
+    </global-element>
+    <global-element name="Property Placeholder" type="http://www.springframework.org/schema/context/property-placeholder" entity-id="Property Placeholder#1">
+        <properties>
+            <property name="properties-ref"/>
+            <property name="order"/>
+            <property name="location" value="common.properties"/>
+            <property name="local-override"/>
+            <property name="system-properties-mode"/>
+            <property name="file-encoding"/>
+            <property name="auxiliary;index" value="2"/>
+            <property name="ignore-unresolvable"/>
+            <property name="ignore-resource-not-found"/>
+        </properties>
+    </global-element>
+    <global-element name="List_Map__To_CSV" type="http://www.mulesoft.org/schema/mule/ee/data-mapper/config" entity-id="DataMapper#1">
+        <properties>
+            <property name="name" value="List_Map__To_CSV"/>
+            <property name="auxiliary;index" value="3"/>
+            <property name="transformationGraphPath" value="list_map__to_csv.grf"/>
+        </properties>
+    </global-element>
+    <flow xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="container" SubFlow="false" type="http://www.mulesoft.org/schema/mule/batch/job" entity-id="Batch#1">
+        <properties>
+            <property name="name" value="database-to-fileBatch1"/>
+            <property name="max-failed-records"/>
+            <property name="scheduling-strategy"/>
+            <property name="auxiliary;index" value="4"/>
+        </properties>
+        <lane xsi:type="nestedContainer" name="Input" type="http://www.mulesoft.org/schema/mule/batch/input" hadOnlyOneElement="false" index="0" isChoiceOtherwiseLane="false" entity-id="3b3d95cc-1c61-4c2f-8666-ead37839dcd5">
+            <scope name="Poll" type="org.mule.tooling.ui.modules.core.endpoint.Poller" entity-id="Poll#1">
+                <properties>
+                    <property name="updated"/>
+                    <property name="cron-scheduler" value="false"/>
+                    <property name="fixed-frequency-scheduler" value="true"/>
+                    <property name="auxiliary;index" value="6"/>
+                    <property-collection name="">
+                        <property name="watermark" value="false"/>
+                        <property name="noWatermark" value="true"/>
+                    </property-collection>
+                    <property-collection name="@http://www.mulesoft.org/schema/mule/core/fixed-frequency-scheduler;1">
+                        <property name="startDelay" value="0"/>
+                        <property name="timeUnit" value="HOURS"/>
+                        <property name="frequency" value="1"/>
+                        <property name="auxiliary;index" value="7"/>
+                    </property-collection>
+                </properties>
+                <description></description>
+                <compartment entity-id="compartment#1">
+                    <lane hadOnlyOneElement="false" index="0" isChoiceOtherwiseLane="false" entity-id="compartment-lane#1">
+                        <pattern name="Database" type="http://www.mulesoft.org/schema/mule/db/database-connector" entity-id="Database#1">
+                            <graphicalData x="0" y="0" width="0" height="0"/>
+                            <properties>
+<property name="streaming"/>
+<property name=""/>
+<property name="fetchSize"/>
+<property name="source"/>
+<property name="transactionalAction"/>
+<property name="target"/>
+<property name="maxRows"/>
+<property name="org.mule.tooling.ui.modules.core.widgets.meta.ModeAttribute" value="http://www.mulesoft.org/schema/mule/db/select"/>
+<property name="config-ref" value="Generic_Database_Configuration"/>
+<property name="auxiliary;index" value="8"/>
+<property-collection name="@http://www.mulesoft.org/schema/mule/db/parameterized-query;0">
+    <property name="text" value="SELECT no, first_name, last_name, role FROM employees INNER JOIN roles ON employees.no = roles.emp_no;"/>
+    <property name="auxiliary;index" value="9"/>
+    <property name="auxiliary;wrapIn" value="9"/>
+</property-collection>
+                            </properties>
+                        </pattern>
+                    </lane>
+                </compartment>
+            </scope>
+            <properties>
+                <property name="auxiliary;index" value="5"/>
+            </properties>
+        </lane>
+        <lane xsi:type="nestedContainer" name="Process Records" type="http://www.mulesoft.org/schema/mule/batch/process-records" hadOnlyOneElement="false" index="0" isChoiceOtherwiseLane="false" entity-id="a5b73832-8bde-4a26-938e-a0bbe724da8d">
+            <scope type="http://www.mulesoft.org/schema/mule/batch/step" entity-id="Batch Step#1">
+                <properties>
+                    <property name="filter-expression"/>
+                    <property name="name" value="Batch_Step"/>
+                    <property name="accept-expression"/>
+                    <property name="accept-policy"/>
+                    <property name="auxiliary;index" value="11"/>
+                </properties>
+                <compartment entity-id="compartment#2">
+                    <lane hadOnlyOneElement="false" index="0" isChoiceOtherwiseLane="false" entity-id="compartment-lane#2">
+                        <scope name="Batch Commit" type="http://www.mulesoft.org/schema/mule/batch/commit" entity-id="Batch Commit#1">
+                            <graphicalData x="466" y="121" width="397" height="116"/>
+                            <properties>
+<property name="streaming"/>
+<property name="auxiliary;index" value="12"/>
+<property name="size" value="200"/>
+                            </properties>
+                            <compartment entity-id="compartment#3">
+<lane hadOnlyOneElement="false" index="0" isChoiceOtherwiseLane="false" entity-id="compartment-lane#3">
+    <pattern name="List&lt;Map&gt; To CSV" type="http://www.mulesoft.org/schema/mule/ee/data-mapper/data-mapper-connector" entity-id="DataMapper#2">
+        <graphicalData x="177" y="154" width="113" height="69"/>
+        <properties>
+            <property name="returnClass"/>
+            <property name="stream"/>
+            <property name="input-ref"/>
+            <property name="target"/>
+            <property name="org.mule.tooling.ui.modules.core.widgets.meta.ModeAttribute" value="http://www.mulesoft.org/schema/mule/ee/data-mapper/transform"/>
+            <property name="pipeSize"/>
+            <property name="config-ref" value="List_Map__To_CSV"/>
+            <property name="auxiliary;index" value="13"/>
+        </properties>
+    </pattern>
+    <endpoint direction="Outbound" name="File" type="http://www.mulesoft.org/schema/mule/file/endpoint" entity-id="File#1">
+        <graphicalData x="350" y="154" width="68" height="69"/>
+        <properties>
+            <property name="auxiliary;erased;mimeType" value="true"/>
+            <property name="businessEventsLabel" value=""/>
+            <property name="disableTransportTransformer" value="false"/>
+            <property name="tracking:enable-default-events" value="false"/>
+            <property name="exchange-pattern" value="one-way"/>
+            <property name="ref" value=""/>
+            <property name="transformer-refs" value=""/>
+            <property name="updated"/>
+            <property name="address" value=""/>
+            <property name="auxiliary;erased;encoding" value="true"/>
+            <property name="path" value="${path.to.dir}"/>
+            <property name="encoding" value=""/>
+            <property name="outputPattern" value=""/>
+            <property name="auxiliary;index" value="15"/>
+            <property name="mimeType" value=""/>
+            <property name="responseTimeout" value="10000"/>
+            <property name="connector-ref" value=""/>
+        </properties>
+        <description></description>
+    </endpoint>
+</lane>
+                            </compartment>
+                        </scope>
+                    </lane>
+                </compartment>
+            </scope>
+            <properties>
+                <property name="auxiliary;index" value="10"/>
+            </properties>
+        </lane>
+        <lane xsi:type="nestedContainer" name="On Complete" type="http://www.mulesoft.org/schema/mule/batch/on-complete" hadOnlyOneElement="false" index="0" isChoiceOtherwiseLane="false" entity-id="c0d9c9f7-5079-49a2-8a9f-58c6b8067c8b">
+            <pattern name="Logger" type="http://www.mulesoft.org/schema/mule/core/logger" entity-id="Logger#3">
+                <properties>
+                    <property name="message" value="Total Records exported: #[message.payload.getLoadedRecords()], Failed Records: #[message.payload.getFailedRecords()], Processing time: #[message.payload.getElapsedTimeInMillis()]"/>
+                    <property name="category"/>
+                    <property name="level" value="INFO"/>
+                    <property name="auxiliary;index" value="18"/>
+                </properties>
+            </pattern>
+            <properties>
+                <property name="auxiliary;index" value="17"/>
+            </properties>
+        </lane>
+        <containerBehavior>default</containerBehavior>
+    </flow>
+</mule-configuration>
